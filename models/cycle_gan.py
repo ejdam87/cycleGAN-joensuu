@@ -1,11 +1,12 @@
 import torch
+import itertools
 
 import gan_loss
 import unet
 import patch_gan
 
 class CycleGAN(torch.nn.Module):
-    
+
     def __init__(self, in_channels: int, out_channels: int) -> None:
 
         # ---
@@ -22,9 +23,13 @@ class CycleGAN(torch.nn.Module):
         self.D_y = patch_gan.PatchGAN(in_channels)
         # ---
 
-        # --- losses
-        self.criterion_GAN = gan_loss.GANLoss()
-        self.criterionCylce = torch.nn.L1Loss()
+        # --- Losses
+        self.criterion_GAN = gan_loss.GANLoss()  # classic GAN
+        self.criterionCycle = torch.nn.L1Loss()  # G( F(y) ) ≈ y, F( G(x) ) ≈ x
+        self.criterionIdt = torch.nn.L1Loss()    # Color preservation
+        # ---
 
-        # TODO: what is the last loss for ???
+        # --- Optimizers
+        self.optimizer_GF = torch.optim.Adam(itertools.chain(self.G.parameters(), self.F.parameters()))
+        self.optimizer_D = torch.optim.Adam(itertools.chain(self.D_x.parameters(), self.D_y.parameters()))
         # ---
